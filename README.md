@@ -9,15 +9,12 @@ The goal is to transform software development from an artisanal process ("Vibe C
 This repository functions as a "Central Brain". For any microservice or satellite project to inherit these rules, do not copy the files manually. Instead, use the `AGENTS.md` standard in the target repository and run the following initialization command to fetch `AGENTS.md`, the core rules, and the bootstrapping script:
 
 ```bash
-mkdir -p .o16g/policies .o16g/prompts scripts && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/AGENTS.md -o AGENTS.md && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/core_axioms.md -o .o16g/core_axioms.md && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/business_rules.yaml -o .o16g/policies/business_rules.yaml && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/reviewer.prompt -o .o16g/prompts/reviewer.prompt && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/bootstrap.sh -o scripts/bootstrap.sh
+mkdir -p scripts && curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/o16g -o scripts/o16g && chmod +x scripts/o16g && scripts/o16g init
 ```
 
-Each satellite project can then extend these base rules with its own local overrides inside `.o16g/`, while the core governance always points back to this central repository.
+The new `o16g` CLI tool streamlines initialization, canvas status checking, and structural pruning. It also installs a local Git pre-commit hook that validates the presence and state of `.o16g_state.md`.
+
+Each satellite project can then extend these base rules with its own local overrides inside `.o16g/`, while the core governance always points back to this central repository. Furthermore, GitHub Actions and Templates are included for Automated PR verification enforcing Review-Driven Development (RDD).
 
 ---
 
