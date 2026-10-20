@@ -8,20 +8,20 @@ Do not write code yet. First, inject the o16g "Brain" into your local repository
 Run the following command in your terminal to fetch the `AGENTS.md` rules, core axioms, policies, reviewer prompts, and the bootstrap script:
 
 ```bash
-mkdir -p .o16g/policies .o16g/prompts scripts && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/AGENTS.md -o AGENTS.md && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/core_axioms.md -o .o16g/core_axioms.md && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/business_rules.yaml -o .o16g/policies/business_rules.yaml && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/reviewer.prompt -o .o16g/prompts/reviewer.prompt && \
-curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/bootstrap.sh -o scripts/bootstrap.sh
+mkdir -p scripts && \
+curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/o16g -o scripts/o16g && \
+chmod +x scripts/o16g && \
+scripts/o16g init
 ```
+
+This will also automatically install a git pre-commit hook that will ensure your REASONS Canvas is never empty or missing before a commit is created.
 
 ## Phase 2: Define the Intention (The Voyage)
 Never prompt an AI agent without a specification.
-The system canvas/state is tracked in `.o16g_state.md` (the REASONS Canvas). When the orchestrator agent starts, it will automatically check for this file and run the bootstrap script to generate it if it doesn't exist. Alternatively, you can run it manually:
+The system canvas/state is tracked in `.o16g_state.md` (the REASONS Canvas). When the orchestrator agent starts, it will automatically check for this file and run the bootstrap script to generate it if it doesn't exist. Alternatively, you can verify its status manually using the CLI:
 
 ```bash
-bash scripts/bootstrap.sh
+scripts/o16g status
 ```
 
 Fill out the business KPIs, requirements, and strict Safeguards in `.o16g_state.md`. This file is your executable design contract.

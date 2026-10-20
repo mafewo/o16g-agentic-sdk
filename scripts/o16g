@@ -1,0 +1,128 @@
+#!/usr/bin/env bash
+# o16g CLI Tool
+# A unified command line interface for the o16g Agentic SDK
+
+set -e
+
+COMMAND=$1
+ARGS=${@:2}
+
+show_help() {
+    echo "o16g CLI - Autonomous Development Orchestrator"
+    echo ""
+    echo "Usage: o16g <command> [options]"
+    echo ""
+    echo "Commands:"
+    echo "  init      Initializes the o16g framework (downloads rules, bootstrap, etc.)"
+    echo "  status    Validates the current state of .o16g_state.md"
+    echo "  prune     Analyzes and removes dead feature flags using AST"
+    echo ""
+}
+
+cmd_init() {
+    echo "Initializing o16g Framework..."
+    mkdir -p .o16g/policies .o16g/prompts scripts
+
+    # Fetch core files (fallback to remote if not available locally, though locally they should be)
+    if [ -f "AGENTS.md" ]; then
+        echo "Using local AGENTS.md"
+    else
+        curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/AGENTS.md -o AGENTS.md
+    fi
+
+    if [ -f "core/core_axioms.md" ]; then
+        cp core/core_axioms.md .o16g/core_axioms.md
+    else
+        curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/core_axioms.md -o .o16g/core_axioms.md
+    fi
+
+    if [ -f "core/business_rules.yaml" ]; then
+        cp core/business_rules.yaml .o16g/policies/business_rules.yaml
+    else
+        curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/business_rules.yaml -o .o16g/policies/business_rules.yaml
+    fi
+
+    if [ -f "core/reviewer.prompt" ]; then
+        cp core/reviewer.prompt .o16g/prompts/reviewer.prompt
+    else
+        curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/core/reviewer.prompt -o .o16g/prompts/reviewer.prompt
+    fi
+
+    # Fetch scripts
+    if [ ! -f "scripts/bootstrap.sh" ]; then
+        curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/bootstrap.sh -o scripts/bootstrap.sh
+    fi
+
+    if [ ! -f "scripts/pre-commit" ]; then
+        curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/pre-commit -o scripts/pre-commit
+    fi
+
+    if [ ! -f "scripts/o16g" ]; then
+        curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/o16g -o scripts/o16g
+    fi
+
+    chmod +x scripts/bootstrap.sh
+    chmod +x scripts/pre-commit
+    chmod +x scripts/o16g
+
+    # Run bootstrap to create canvas and install hook
+    bash scripts/bootstrap.sh
+
+    echo "✅ Initialization complete."
+}
+
+cmd_status() {
+    STATE_FILE=".o16g_state.md"
+    if [ ! -f "$STATE_FILE" ]; then
+        echo "❌ Status: MISSING. The $STATE_FILE does not exist. Run 'o16g init'."
+        exit 1
+    fi
+
+    if [ ! -s "$STATE_FILE" ]; then
+        echo "❌ Status: EMPTY. The $STATE_FILE is empty."
+        exit 1
+    fi
+
+    echo "✅ Status: OK. The REASONS Canvas is present and populated."
+}
+
+cmd_prune() {
+    FLAG_ID=$1
+    if [ -z "$FLAG_ID" ]; then
+        echo "Error: You must provide a feature flag ID to prune."
+        echo "Usage: o16g prune <flag_id>"
+        exit 1
+    fi
+
+    echo "🔎 Initiating agnostic structural pruning for flag: $FLAG_ID"
+    echo "⚠️ NOTE: The core agent is required to use universal AST/LSP analysis for this task."
+
+    if command -v ast-grep &> /dev/null; then
+        echo "✅ ast-grep detected. Executing structural search and replace..."
+        # Example of a generic ast-grep prune instruction for if statements based on flags
+        ast-grep --pattern 'if (feature_flags.has("'$FLAG_ID'")) { $$$ }' --rewrite '$$$' . || true
+        ast-grep --pattern 'if (feature_flags.has("'$FLAG_ID'")) { $$$ } else { $$$ }' --rewrite '$$$' . || true
+        echo "✅ AST Pruning sequence initiated."
+    else
+        echo "ℹ️ ast-grep not found in PATH. Falling back to universal instructions."
+        echo "   Please instruct your agent to use appropriate LSP or AST tools for your language."
+    fi
+
+    echo "Pruning instruction issued. (Agent action required to complete extirpation)."
+}
+
+case "$COMMAND" in
+    init)
+        cmd_init
+        ;;
+    status)
+        cmd_status
+        ;;
+    prune)
+        cmd_prune $ARGS
+        ;;
+    *)
+        show_help
+        exit 1
+        ;;
+esac

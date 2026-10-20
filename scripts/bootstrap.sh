@@ -18,3 +18,25 @@ if [ ! -f "$STATE_FILE" ]; then
 else
   echo "State Canvas ($STATE_FILE) already exists."
 fi
+
+# Install pre-commit hook
+HOOK_DIR=".git/hooks"
+PRE_COMMIT_HOOK="$HOOK_DIR/pre-commit"
+
+if [ -d "$HOOK_DIR" ]; then
+  if [ -f "scripts/pre-commit" ]; then
+    cp "scripts/pre-commit" "$PRE_COMMIT_HOOK"
+    chmod +x "$PRE_COMMIT_HOOK"
+    echo "Pre-commit hook installed successfully."
+  elif [ -f ".o16g/scripts/pre-commit" ]; then
+    cp ".o16g/scripts/pre-commit" "$PRE_COMMIT_HOOK"
+    chmod +x "$PRE_COMMIT_HOOK"
+    echo "Pre-commit hook installed successfully."
+  else
+    curl -sL https://raw.githubusercontent.com/MadMorris/o16g-agentic-sdk/main/scripts/pre-commit -o "$PRE_COMMIT_HOOK"
+    chmod +x "$PRE_COMMIT_HOOK"
+    echo "Pre-commit hook installed successfully via remote."
+  fi
+else
+  echo "Not a git repository, skipping pre-commit hook installation."
+fi

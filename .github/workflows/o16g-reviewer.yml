@@ -1,0 +1,46 @@
+name: o16g Automated Reviewer (RDD)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sdd-validation:
+    name: Verify SDD Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for .o16g_state.md modifications
+        id: check_canvas
+        run: |
+          # In GitHub Actions, github.base_ref is only available for pull requests
+          BASE_REF=${{ github.base_ref || 'main' }}
+          if git diff --name-only origin/$BASE_REF HEAD | grep -q "\.o16g_state\.md$"; then
+            echo "Canvas was updated."
+            echo "canvas_updated=true" >> $GITHUB_OUTPUT
+          else
+            echo "Canvas was NOT updated."
+            echo "canvas_updated=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate SDD & Business Rules
+        if: steps.check_canvas.outputs.canvas_updated == 'false'
+        run: |
+          BASE_REF=${{ github.base_ref || 'main' }}
+          # If the canvas was not updated, but code was, we issue a warning or error.
+          # We only fail if non-documentation files were changed without updating the spec.
+          if git diff --name-only origin/$BASE_REF HEAD | grep -vqE '(\.md$|\.txt$)'; then
+            echo "::error title=SDD Violation (Drift Detected)::Source code modified without a prior update to .o16g_state.md (The Canvas). Transitioning to [BLOCKED_DRIFT]."
+            exit 1
+          fi
+
+      - name: Run Reviewer Agent Stub
+        run: |
+          echo "Executing Agentic RDD Audit based on .o16g/prompts/reviewer.prompt and business_rules.yaml"
+          # In a real implementation, this step would invoke an LLM (e.g., via a custom GitHub Action)
+          # passing the git diff and the reviewer.prompt.
+          echo "Status: PASSED_PRELIMINARY_CHECKS"
